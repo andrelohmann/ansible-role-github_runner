@@ -1,0 +1,69 @@
+---
+
+- name: create the github group
+  group:
+    name: github
+    state: present
+
+- name: Allow 'github' group to have passwordless sudo
+  lineinfile:
+    dest: /etc/sudoers
+    state: present
+    regexp: '^%github'
+    line: '%github ALL=(ALL) NOPASSWD: ALL'
+    validate: 'visudo -cf %s'
+
+- name: create the github user
+  user:
+    name: github
+    group: github
+    shell: /bin/bash
+    state: present
+
+- name: create /home/github/actions-runner
+  file:
+    path: /home/github/actions-runner
+    state: directory
+    owner: github
+    group: github
+    mode: 0755
+
+- name: fetch latest github runner version
+  shell: curl -s -o /dev/null -I -w "%{redirect_url}\n" https://github.com/actions/runner/releases/latest | grep -oP "[0-9]+(\.[0-9]+)+$"
+  args:
+    executable: /bin/bash
+  register: github_runner_version
+
+- name: download github actions runner
+  get_url:
+    url: https://github.com/actions/runner/releases/download/v{{ github_runner_version.stdout }}/actions-runner-linux-x64-{{ github_runner_version.stdout }}.tar.gz
+    owner: github
+    group: github
+    dest: /home/github/actions-runner/actions-runner-linux-x64-{{ github_runner_version.stdout }}.tar.gz
+    mode: 0755
+
+- name: Unarchive the runner
+  unarchive:
+    src: /home/github/actions-runner/actions-runner-linux-x64-{{ github_runner_version.stdout }}.tar.gz
+    dest: /home/github/actions-runner
+    remote_src: yes
+
+- name: configure the runner
+  shell: "sudo -E -u github ./config.sh --unattended --url https://github.com/{{ github_runner_organization }} --token {{ github_runner_token }} --name {{ github_runner_name }} --labels {{ ', '.join(github_runner_labels) }}"
+  args:
+    executable: /bin/bash
+    chdir: /home/github/actions-runner
+
+- name: install the runner as a service
+  shell: "sudo ./svc.sh install"
+  args:
+    executable: /bin/bash
+    chdir: /home/github/actions-runner
+
+- name: start the runner
+  shell: ./svc.sh start
+  args:
+    executable: /bin/bash
+    chdir: /home/github/actions-runner
+
+...

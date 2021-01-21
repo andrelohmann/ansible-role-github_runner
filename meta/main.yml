@@ -1,0 +1,22 @@
+---
+galaxy_info:
+  role_name: github_runner
+  author: andrelohmann
+  description: install github runner
+  company: Smartformer
+
+  license: MIT
+
+  min_ansible_version: 2.7
+
+  platforms:
+    - name: Ubuntu
+      versions:
+      - bionic
+      - focal
+
+  galaxy_tags:
+  - github_runner
+
+dependencies: []
+...
