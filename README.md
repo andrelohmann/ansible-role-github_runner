@@ -1,5 +1,5 @@
-github_runner
-=============
+andrelohmann.github_runner
+==========================
 
 Install github runner
 
@@ -26,7 +26,7 @@ Example Playbook
 
     - hosts: github_runner
       roles:
-      - github_runner
+      - andrelohmann.github_runner
 
 License
 -------
