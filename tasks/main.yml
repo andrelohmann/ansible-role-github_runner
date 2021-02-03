@@ -5,6 +5,13 @@
     name: github
     state: present
 
+- name: create the github user
+  user:
+    name: github
+    group: github
+    shell: /bin/bash
+    state: present
+
 - name: Allow 'github' group to have passwordless sudo
   lineinfile:
     dest: /etc/sudoers
@@ -12,13 +19,6 @@
     regexp: '^%github'
     line: '%github ALL=(ALL) NOPASSWD: ALL'
     validate: 'visudo -cf %s'
-
-- name: create the github user
-  user:
-    name: github
-    group: github
-    shell: /bin/bash
-    state: present
 
 - name: create /home/github/actions-runner
   file:
@@ -46,10 +46,13 @@
   unarchive:
     src: /home/github/actions-runner/actions-runner-linux-x64-{{ github_runner_version.stdout }}.tar.gz
     dest: /home/github/actions-runner
+    owner: github
+    group: github
+    mode: 0755
     remote_src: yes
 
 - name: configure the runner
-  shell: "sudo -E -u github ./config.sh --unattended --url https://github.com/{{ github_runner_organization }} --token {{ github_runner_token }} --name {{ github_runner_name }} --labels {{ ', '.join(github_runner_labels) }}"
+  shell: "sudo -E -u github ./config.sh --unattended --url https://github.com/{{ github_runner_organization }} --token {{ github_runner_token }} --name {{ github_runner_name }} --labels {{ ','.join(github_runner_labels) }}"
   args:
     executable: /bin/bash
     chdir: /home/github/actions-runner
