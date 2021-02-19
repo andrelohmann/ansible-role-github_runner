@@ -9,17 +9,28 @@ Install github runner
   * https://github.com/actions/runner
   * https://medium.com/@gjgd/create-your-self-hosted-github-action-runner-in-5-minutes-a9eff615edc4
 
-To create a new organization runner, you need to visit your organization path (https://github.com/__YOUR_ORGANIZATION__) -> Settings -> Actions -> Self-hosted runners -> Add new
+This role installs a new private github runner for your organization.
+
+To fetch a github runner regsitration token from the api, the authentication with a personal access token with "admin:org" permissions is neccessary. Generate this personal access token at Settings -> Developer settings -> Personal access tokens -> Generate new token. Select scopes __admin:org__.
+
+admin:org
 
 Role Variables
 --------------
 
     github_runner_organization: __YOUR_ORGANIZATION__
-    github_runner_token: __YOUR_TOKEN__
+    github_runner_pat: __YOUR_PERSONAL_ACCESS_TOKEN__
     github_runner_name: __RUNNER_NAME__
     github_runner_labels:
     - label1
     - label2
+
+Optionsl Variables
+------------------
+
+    github_runner_delete_existing: True
+
+If an equally named runner already exists on the organization, it will be delted first, based on the github_runner_delete_existing variable setting (defaults to True).
 
 Example Playbook
 ----------------
