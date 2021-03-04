@@ -77,43 +77,12 @@
       mode: 0755
       remote_src: yes
 
-  # https://docs.github.com/en/rest/reference/actions#list-self-hosted-runners-for-an-organization
-  # https://gist.github.com/ipbastola/2c955d8bf2e96f9b1077b15f995bdae3
-  - name: check if equally named runner exists on org and extract id
-    shell: >
-      curl
-      -H "Accept: application/vnd.github.v3+json"
-      -H "Authorization: token {{ github_runner_pat }}"
-      https://api.github.com/orgs/{{ github_runner_organization }}/actions/runners
-      | jq -c '.runners[] | select( .name | contains("{{ github_runner_name }}"))' | jq .id --raw-output
-    args:
-      executable: /bin/bash
-    register: _github_runner_id
-
-  # https://docs.github.com/en/rest/reference/actions#delete-a-self-hosted-runner-from-an-organization
-  - name: delete the runner from the org if it exists
-    shell: >
-      curl -X DELETE
-      -H "Accept: application/vnd.github.v3+json"
-      -H "Authorization: token {{ github_runner_pat }}"
-      https://api.github.com/orgs/{{ github_runner_organization }}/actions/runners/{{ _github_runner_id.stdout }}
-    args:
-      executable: /bin/bash
-    when: _github_runner_id.stdout != "" and github_runner_delete_existing
-
-  - name: fetch github runner token
-    shell: >
-      curl -X POST
-      -H "Accept: application/vnd.github.v3+json"
-      -H "Authorization: token {{ github_runner_pat }}"
-      https://api.github.com/orgs/{{ github_runner_organization }}/actions/runners/registration-token
-      | jq .token --raw-output
-    args:
-      executable: /bin/bash
-    register: _github_runner_token
+  - name: extract registration token at runtime
+    include: pat.yml
+    when: github_runner_pat != False
 
   - name: configure the runner
-    shell: "sudo -E -u github ./config.sh --unattended --url https://github.com/{{ github_runner_organization }} --token {{ _github_runner_token.stdout }} --name {{ github_runner_name }} --labels {{ ','.join(github_runner_labels) }}"
+    shell: "sudo -E -u github ./config.sh --unattended --url https://github.com/{{ github_runner_organization }} --token {{ github_runner_registration_token }} --name {{ github_runner_name }} --labels {{ ','.join(github_runner_labels) }}"
     args:
       executable: /bin/bash
       chdir: /home/github/actions-runner

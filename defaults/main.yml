@@ -1,5 +1,7 @@
 ---
 
 github_runner_delete_existing: True
+github_runner_pat: False
+github_runner_registration_token: False
 
 ...
